@@ -70,6 +70,10 @@ for link in links:
     csvfile = link.text.strip()
     if 'CSV' in csvfile:
         csvMth = csvfile.split(' ')[0][:3].strip()
+        if 'Q1' in csvMth:
+            csvMth = 'Mar'
+        if 'Q2' in csvMth:
+            csvMth = 'Jun'
         if 'Q3' in csvMth:
             csvMth = 'Sep'
         if 'Q4' in csvMth:
@@ -78,10 +82,7 @@ for link in links:
         if 'to' in csvYr:
             csvYr = csvfile.split(' ')[3].strip()
         if '/' in csvYr:
-            csvYr = csvfile.split(' ')[3].strip().split('/')[0]
-        if 'Information' in csvYr:
-            csvYr = '2014'
-
+            csvYr = csvfile.split(' ')[1].strip().split('/')[0]
         csvMth = convert_mth_strings(csvMth.upper())
         filename = entity_id + "_" + csvYr + "_" + csvMth
         todays_date = str(datetime.now())
