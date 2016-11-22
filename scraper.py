@@ -1,6 +1,7 @@
-#-*- coding: utf-8 -*-
+ #-*- coding: utf-8 -*-
 
 #### IMPORTS 1.0
+
 import os
 import re
 import scraperwiki
@@ -50,7 +51,7 @@ def validateURL(url):
         else:
             ext = os.path.splitext(url)[1]
         validURL = r.getcode() == 200
-        validFiletype = ext.lower() in ['.csv', '.xls', '.xlsx']
+        validFiletype = ext.lower() in ['.csv', '.xls', '.xlsx', '.zip']
         return validURL, validFiletype
     except:
         print ("Error validating URL.")
@@ -75,6 +76,7 @@ def validate(filename, file_url):
     return True
 
 
+
 def convert_mth_strings ( mth_string ):
     month_numbers = {'JAN': '01', 'FEB': '02', 'MAR':'03', 'APR':'04', 'MAY':'05', 'JUN':'06', 'JUL':'07', 'AUG':'08', 'SEP':'09','OCT':'10','NOV':'11','DEC':'12' }
     for k, v in month_numbers.items():
@@ -84,8 +86,8 @@ def convert_mth_strings ( mth_string ):
 
 #### VARIABLES 1.0
 
-entity_id = "E0701_HBC_gov"
-url = "https://www.hartlepool.gov.uk/downloads/download/262/council_expenditure"
+entity_id = "E0604_CWACUA_gov"
+url = "http://inside.cheshirewestandchester.gov.uk/find_out_more/datasets_and_statistics/opendata/expenditure_over_500"
 errors = 0
 data = []
 
@@ -98,31 +100,35 @@ soup = BeautifulSoup(html, "lxml")
 
 #### SCRAPE DATA
 
-links = soup.find('ul', 'item-list item-list__rich').find_all('h3')
-for link in links:
+import sys
+reload(sys)
+sys.setdefaultencoding('UTF8')
 
-    url = link.find('a')['href'].replace('/downloads/file/', '/download/downloads/id/')
-    csvfile = link.text.strip()
-    if 'Excel' in csvfile:
-        csvMth = csvfile.split(' ')[0][:3].strip()
-        if 'Q1' in csvMth:
-            csvMth = 'Q1'
-        if 'Q2' in csvMth:
-            csvMth = 'Q2'
-        if 'Q3' in csvMth:
-            csvMth = 'Q3'
-        if 'Q4' in csvMth:
-            csvMth = 'Q4'
-        csvYr = csvfile.split(' ')[1].strip()
-        if 'to' in csvYr and 'December 2010' in csvfile:
-            csvYr = csvfile.split(' ')[3].strip()
-            csvMth = 'Q0'
-        if '/' in csvYr:
-            csvYr = csvfile.split(' ')[1].strip().split('/')[0]
-        if '13' in csvYr:
-            csvYr = '2013'
-        csvMth = convert_mth_strings(csvMth.upper())
-        data.append([csvYr, csvMth, url])
+blocks = soup.find('ul', 'circle_list')
+links = blocks.find_all('a', href=True)
+for link in links:
+        url = 'http://inside.cheshirewestandchester.gov.uk'+link['href']
+        html = urllib2.urlopen(url)
+        soup = BeautifulSoup(html, 'lxml')
+        # contents = soup.find('div', 'entry-content')
+
+        links = soup.find_all('a',  href=True)
+        for link in links:
+            url = link['href']
+            if 'zip' in url:
+                csvFile = link.text.strip()
+                if 'Quarter' in csvFile:
+                        if 'Quarter 1' in csvFile:
+                            csvMth = 'Q1'
+                        if 'Quarter 2' in csvFile:
+                            csvMth = 'Q2'
+                        if 'Quarter 3' in csvFile:
+                            csvMth = 'Q3'
+                        if 'Quarter 4' in csvFile:
+                            csvMth = 'Q4'
+                        csvYr = csvFile.strip().split('-')[-2].strip()[-4:]
+                        csvMth = convert_mth_strings(csvMth.upper())
+                        data.append([csvYr, csvMth, url])
 
 
 #### STORE DATA 1.0
@@ -146,4 +152,3 @@ if errors > 0:
 
 
 #### EOF
-
